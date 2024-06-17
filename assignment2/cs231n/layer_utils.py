@@ -28,74 +28,7 @@ def affine_relu_backward(dout, cache):
 
 # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-def generic_forward(x, w, b, gamma=None, beta=None, bn_param=None, dropout_param=None, last = 'False'):
-    if x is None:
-        raise ValueError("Input x is None")
-    if w is None:
-        raise ValueError("Weight w is None")
-    if b is None:
-        raise ValueError("Bias b is None")
-
-    # Perform the affine forward pass
-    out, fc_cache = affine_forward(x, w, b)
-
-    # Ensure affine output is not None
-    if out is None:
-        raise ValueError("Affine output is None")
-
-    if gamma is not None and beta is not None and bn_param is not None:
-        out, bn_cache = batchnorm_forward(out, gamma, beta, bn_param)
-        if out is None:
-            raise ValueError("BatchNorm output is None")
-    else: 
-      bn_cache = None
-
-    # Pass the outputs through activation
-    out, relu_cache = relu_forward(out) # perform relu
-
-    # Ensure ReLU output is not None
-    if out is None:
-        raise ValueError("ReLU output is None")
-
-    if dropout_param is not None:
-        out, dropout_cache = dropout_forward(out, dropout_param)
-        if out is None:
-            raise ValueError("Dropout output is None")
-    else:
-      dropout_cache = None
-
-    # Return the final output and cache
-    return out, (fc_cache, bn_cache, relu_cache, dropout_cache)
-
-
-def generic_backward(dout, cache):
-    """Backward pass for the affine-bn/ln?-relu-dropout? convenience layer.
-    """
-    # Init norm params to None
-    dgamma, dbeta = None, None
-
-    # Get the prapared caches from the forward pass
-    fc_cache, bn_cache, relu_cache, dropout_cache = cache
-
-    # If dropout was performed
-    if dropout_cache is not None:
-        dout = dropout_backward(dout, dropout_cache)
-    
-    # If relu was performed
-    if relu_cache is not None:
-        dout = relu_backward(dout, relu_cache)
-
-    # If norm was performed
-    if bn_cache is not None:
-        dout, dgamma, dbeta = batchnorm_backward_alt(dout, bn_cache)
-    # elif ln_cache is not None:
-    #     dout, dgamma, dbeta = layernorm_backward(dout, ln_cache)
-    
-    # Affine backward is a must
-    dx, dw, db = affine_backward(dout, fc_cache)
-
-    return dx, dw, db, dgamma, dbeta
-
+pass
 
 # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
