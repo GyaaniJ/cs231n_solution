@@ -72,9 +72,9 @@ def rnn_step_forward(x, prev_h, Wx, Wh, b):
     # and cache variables respectively.                                          #
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-    pass
-
+    next_h = np.tanh(np.dot(x,Wx)+ np.dot(prev_h,Wh)+b)
+    cache = x, prev_h, Wx, Wh, b, next_h
+    
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ##############################################################################
     #                               END OF YOUR CODE                             #
@@ -105,7 +105,15 @@ def rnn_step_backward(dnext_h, cache):
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    x, prev_h, Wx, Wh, b,next_h = cache
+    dtanh = dnext_h * (1 - next_h ** 2)
+    
+    dx = np.dot(dtanh, Wx.T)
+    dprev_h = np.dot(dtanh, Wh.T)
+    dWx = np.dot(x.T, dtanh)
+    dWh = np.dot(prev_h.T, dtanh)
+    db = np.sum(dtanh, axis = 0)
+
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ##############################################################################
@@ -140,7 +148,20 @@ def rnn_forward(x, h0, Wx, Wh, b):
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    N, T, D = x.shape
+    
+    H = h0.shape[1]
+    
+    h= np.zeros((N,T,H))
+    cache = []
+    
+    prev_h = h0
+    
+    for t in range(T):
+        next_h, step_cache = rnn_step_forward(x[:,t,:], prev_h,Wx, Wh, b)
+        h[:,t,:] = next_h
+        cache.append(step_cache)
+        prev_h = next_h
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ##############################################################################
@@ -175,13 +196,36 @@ def rnn_backward(dh, cache):
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    x, prev_h , Wx, Wh, b, next_h = cache[0]
+    
+    N, T, H = dh.shape
+    N, D = x.shape
+    
+    dx = np.zeros((N,T,D))
+    dh0 = np.zeros_like(prev_h)
+    dWx = np.zeros_like(Wx)
+    dWh = np.zeros_like(Wh)
+    db = np.zeros_like(b)
+    dprev_h = np.zeros_like(prev_h)
+    
+    for t in reversed(range(T)):
+        current_cache = cache[t]
+        dnext_h = dh[:,t,:] + dprev_h
+        dx[:,t,:], dprev_h, dWx_step, dWh_step,db_step = rnn_step_backward(dnext_h, current_cache)
+        dWx += dWx_step
+        dWh += dWh_step
+        db += db_step
+    dh0 = dprev_h
+    
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
     return dx, dh0, dWx, dWh, db
+
+def new_func():
+    pass
 
 
 def word_embedding_forward(x, W):
@@ -208,7 +252,8 @@ def word_embedding_forward(x, W):
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    out = W[x]
+    cache = (x,W)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ##############################################################################
@@ -242,8 +287,13 @@ def word_embedding_backward(dout, cache):
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
-
+    x,W = cache
+    
+    V,D = W.shape
+    dW = np.zeros((V,D))
+    
+    np.add.at(dW, x, dout)
+    
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ##############################################################################
     #                               END OF YOUR CODE                             #
@@ -261,6 +311,7 @@ def sigmoid(x):
     top = np.ones_like(x)
     top[neg_mask] = z[neg_mask]
     return top / (1 + z)
+
 
 
 def lstm_step_forward(x, prev_h, prev_c, Wx, Wh, b):
